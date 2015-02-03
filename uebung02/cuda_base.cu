@@ -10,14 +10,55 @@ int solveProblem(const int argc, const char* argv[]){
 	if(argc == 2){
 		cudaEvent_t start, stop;
 		float time;
-		int threads = atoi(argv[1]);
+		int vectorlength = atoi(argv[1]);
 		cudaEventCreate(&start);
 		cudaEventCreate(&stop);
 		// Everything runs on stream 0
 		cudaEventRecord(start);
 
-		// Start kernel
-		kernel<<<1,threads>>>();
+		/* Start Program */
+
+        size_t size = sizeof(int) * vectorlength;
+        int *hosta = (int*) malloc(size);
+        int *hostb = (int*) malloc(size);
+        int *hostc = (int*) malloc(size);
+        // maybe null?
+
+        int *deva, *devb, *devc;
+
+        cudaMalloc((void**) &deva, size);
+        cudaMalloc((void**) &devb, size);
+        cudaMalloc((void**) &devc, size);
+        // maybe null?
+
+        for(int i = 0; i < vectorlength; i++) {
+            hosta[i] = i;
+            hostb[i] = i*i;
+        }
+
+        // Copy vectors to device
+        cudaMemcpy(deva, hosta, size, cudaMemcpyHostToDevice);
+        cudaMemcpy(devb, hostb, size, cudaMemcpyHostToDevice);
+
+		kernel<<<1, vectorlength>>>(deva, devb, devc);
+
+        // Copy results back to host
+        cudaMemcpy(hostc, devc, size, cudaMemcpyDeviceToHost);
+
+        // Print results
+        for (int i = 0; i < vectorlength; ++i) {
+            printf("C[%d] = %d\n", i, hostc[i]);
+        }
+
+        cudaFree(deva);
+        cudaFree(devb);
+        cudaFree(devc);
+
+        free(hosta);
+        free(hostb);
+        free(hostc);
+
+        /* End Program */
 
 		cudaDeviceSynchronize();
 		cudaEventRecord(stop);

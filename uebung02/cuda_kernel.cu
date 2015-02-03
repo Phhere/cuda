@@ -4,7 +4,10 @@
 #include "cuda_threadindex.cuh"
 #include <stdio.h>
 
+/**
+ * Calculate sum of vectors
+ */
 __global__ void kernel(){
 	int threadID = calcIndex1DGrid1DThreads();
-	printf("%d\n", threadID);
+
 }

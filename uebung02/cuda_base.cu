@@ -8,11 +8,13 @@
 int solveProblem(const int argc, const char* argv[]){
 	cudaError_t return_value;
 	if(argc == 2){
-		cudaEvent_t start, stop;
-		float time;
+		cudaEvent_t start, stop, memcopystart, memcopystop;
+		float time, memcopytime;
 		int vectorlength = atoi(argv[1]);
 		cudaEventCreate(&start);
-		cudaEventCreate(&stop);
+        cudaEventCreate(&stop);
+        cudaEventCreate(&memcopystart);
+        cudaEventCreate(&memcopystop);
 		// Everything runs on stream 0
 		cudaEventRecord(start);
 
@@ -37,8 +39,11 @@ int solveProblem(const int argc, const char* argv[]){
         }
 
         // Copy vectors to device
+        cudaEventRecord(memcopystart);
         cudaMemcpy(deva, hosta, size, cudaMemcpyHostToDevice);
         cudaMemcpy(devb, hostb, size, cudaMemcpyHostToDevice);
+        cudaEventRecord(memcopystop);
+        cudaEventSynchronize(memcopystop);
 
         // Calculate blocksize and threadnumber
         int blocksPerGrid = 1;
@@ -55,6 +60,10 @@ int solveProblem(const int argc, const char* argv[]){
         // Copy results back to host
         cudaMemcpy(hostc, devc, size, cudaMemcpyDeviceToHost);
 
+        cudaDeviceSynchronize();
+        cudaEventRecord(stop);
+        cudaEventSynchronize(stop);
+
         // Print results
         for (int i = 0; i < vectorlength; ++i) {
             printf("C[%d] = %d\n", i, hostc[i]);
@@ -70,9 +79,6 @@ int solveProblem(const int argc, const char* argv[]){
 
         /* End Program */
 
-		cudaDeviceSynchronize();
-		cudaEventRecord(stop);
-		cudaEventSynchronize(stop);
 	    return_value = cudaGetLastError();
 	    if(return_value != cudaSuccess){
 	    	printf("Error in Kernel\n");
@@ -81,6 +87,8 @@ int solveProblem(const int argc, const char* argv[]){
 	    }
 	    cudaEventElapsedTime(&time, start, stop);
 	    printf ("Time for the kernel: %f ms\n", time);
+        cudaEventElapsedTime(&memcopytime, memcopystart, memcopystop);
+        printf ("Time to copy data to device: %f ms\n", memcopytime);
 		return 0;
 	} else {
 		printf("parameter required\n");

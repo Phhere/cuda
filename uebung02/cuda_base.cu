@@ -40,7 +40,17 @@ int solveProblem(const int argc, const char* argv[]){
         cudaMemcpy(deva, hosta, size, cudaMemcpyHostToDevice);
         cudaMemcpy(devb, hostb, size, cudaMemcpyHostToDevice);
 
-		kernel<<<1, vectorlength>>>(deva, devb, devc);
+        // Calculate blocksize and threadnumber
+        int blocksPerGrid = 1;
+        int threadsPerBlock = vectorlength;
+
+        if (vectorlength > 1024) {
+            blocksPerGrid = (int) ceil(vectorlength / 1024.0);
+            threadsPerBlock = 1024;
+        }
+
+        // Kernel time!
+		kernel<<<blocksPerGrid, threadsPerBlock>>>(deva, devb, devc);
 
         // Copy results back to host
         cudaMemcpy(hostc, devc, size, cudaMemcpyDeviceToHost);

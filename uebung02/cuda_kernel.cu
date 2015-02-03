@@ -9,7 +9,6 @@
  */
 __global__ void kernel(int *a, int *b, int *c) {
 	int threadID = calcIndex1DGrid1DThreads();
-
     c[threadID] = a[threadID] + b[threadID];
 
 }

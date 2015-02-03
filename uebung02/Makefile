@@ -10,7 +10,7 @@ GL_LIBS=-lGL -lGLU -lX11 -lXi -lXmu -lglut -lGLEW
 SDK_INCLUDE=/opt/cuda/include
 # Flags
 COMMONFLAGS =-O2 -m64
-NVCCFLAGS =-m64 -O2
+NVCCFLAGS =-gencode arch=compute_30,code=sm_30 -m64 -O2
 CXXFLAGS =
 CFLAGS =
 INCLUDES = -I$(CUDA_INCLUDE) -I$(GL_INCLUDE)
@@ -33,5 +33,5 @@ all: $(OBJS)
 clean:
 	rm $(OBJS) $(NAME)
 
-cuda_kernel.o: cuda_threadindex.cuh	
+cuda_kernel.o: cuda_threadindex.cuh
 cuda_base.o: cuda_kernel.cuh

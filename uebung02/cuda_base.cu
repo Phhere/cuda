@@ -28,20 +28,34 @@ int solveProblem(const int argc, const char* argv[]){
 
         int *deva, *devb, *devc;
 
-        cudaMalloc((void**) &deva, size);
-        cudaMalloc((void**) &devb, size);
-        cudaMalloc((void**) &devc, size);
-        // maybe null?
+        if (cudaMalloc((void**) &deva, size) != cudaSuccess) {
+            printf("deva failed\n");
+            return -1;
+        }
+        if (cudaMalloc((void**) &devb, size) != cudaSuccess) {
+            printf("devb failed\n");
+            return -1;
+        }
+        if (cudaMalloc((void**) &devc, size) != cudaSuccess) {
+            printf("devc failed\n");
+            return -1;
+        }
 
         for(int i = 0; i < vectorlength; i++) {
-            hosta[i] = i;
-            hostb[i] = i*i;
+            hosta[i] = i/2;
+            hostb[i] = i/2;
         }
 
         // Copy vectors to device
         cudaEventRecord(memcopystart);
-        cudaMemcpy(deva, hosta, size, cudaMemcpyHostToDevice);
-        cudaMemcpy(devb, hostb, size, cudaMemcpyHostToDevice);
+        if (cudaMemcpy(deva, hosta, size, cudaMemcpyHostToDevice) != cudaSuccess) {
+            printf("deva to device failed.\n");
+            return -1;
+        }
+        if (cudaMemcpy(devb, hostb, size, cudaMemcpyHostToDevice) != cudaSuccess) {
+            printf("devb to device failed.\n");
+            return -1;
+        }
         cudaEventRecord(memcopystop);
         cudaEventSynchronize(memcopystop);
 
@@ -54,20 +68,26 @@ int solveProblem(const int argc, const char* argv[]){
             threadsPerBlock = 1024;
         }
 
+        printf("BlocksPerGrid: %d\n", blocksPerGrid);
+        printf("ThreadsPerBlock: %d\n", threadsPerBlock);
+
         // Kernel time!
 		kernel<<<blocksPerGrid, threadsPerBlock>>>(deva, devb, devc);
 
         // Copy results back to host
-        cudaMemcpy(hostc, devc, size, cudaMemcpyDeviceToHost);
+        if (cudaMemcpy(hostc, devc, size, cudaMemcpyDeviceToHost) != cudaSuccess) {
+            printf("Device to host failed.\n");
+            return -1;
+        }
 
         cudaDeviceSynchronize();
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
 
         // Print results
-        for (int i = 0; i < vectorlength; ++i) {
-            printf("C[%d] = %d\n", i, hostc[i]);
-        }
+        //for (int i = 0; i < vectorlength; ++i) {
+        printf("C[%d] = %d\n", vectorlength-1, hostc[vectorlength-1]);
+        //}
 
         cudaFree(deva);
         cudaFree(devb);
@@ -81,14 +101,14 @@ int solveProblem(const int argc, const char* argv[]){
 
 	    return_value = cudaGetLastError();
 	    if(return_value != cudaSuccess){
-	    	printf("Error in Kernel\n");
-	    	printf("%s\n",cudaGetErrorString(return_value));
+	    	printf("Error in Kernel: %d\n", return_value);
+	    	printf("%s\n", cudaGetErrorString(return_value));
 	    	return -1;
 	    }
 	    cudaEventElapsedTime(&time, start, stop);
-	    printf ("Time for the kernel: %f ms\n", time);
+	    printf("Time for the kernel: %f ms\n", time);
         cudaEventElapsedTime(&memcopytime, memcopystart, memcopystop);
-        printf ("Time to copy data to device: %f ms\n", memcopytime);
+        printf("Time to copy data to device: %f ms\n", memcopytime);
 		return 0;
 	} else {
 		printf("parameter required\n");

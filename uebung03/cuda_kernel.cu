@@ -4,8 +4,6 @@
 #include "cuda_threadindex.cuh"
 #include <stdio.h>
 
-// Axel ist doof
-
 /**
  * Calculate sum of vectors
  */

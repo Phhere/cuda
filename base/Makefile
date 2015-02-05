@@ -33,5 +33,5 @@ all: $(OBJS)
 clean:
 	rm $(OBJS) $(NAME)
 
-cuda_kernel.o: cuda_threadindex.cuh	
+cuda_kernel.o: cuda_threadindex.cuh
 cuda_base.o: cuda_kernel.cuh

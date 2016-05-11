@@ -1,2 +1,2 @@
 # cuda
-Repository with solutions for CUDA curse at HHU
+Repository with solutions for CUDA course at HHU
